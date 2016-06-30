@@ -111,8 +111,26 @@ class RESTProxyBroker:
 
 
 if __name__ == '__main__':
+    import argparse
     import os
     import mimic
+
+    # Parse args
+    parser = argparse.ArgumentParser(description='A foo that bars')
+    parser.add_argument('--host',
+                        nargs=1,
+                        help='for binding the server',
+                        default='localhost')
+    parser.add_argument('--port',
+                        nargs=1,
+                        help='for binding the server',
+                        default='8080',
+                        type=int)
+
+    command_line_args = vars(parser.parse_args())
+    args = {'port': int(command_line_args['port'][0]),
+            'host': command_line_args['host'][0]}
+
     script_dir = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(script_dir, "index.html")) as fp:
         index_html = fp.read()
@@ -121,4 +139,4 @@ if __name__ == '__main__':
     brokerage = mimic.Brokerage(proxy_collection)
     server = RESTProxyBroker(proxy_collection, brokerage, index_html)
 
-    server.run()
+    server.run(**args)
