@@ -53,16 +53,20 @@ class DomainMonitor:
         """
         proxy = url_from_proxy(proxy_dict)
 
-        self._proxies.add(proxy)
-        self._response_times[proxy] = proxy_dict['resp_time']
+        if proxy in self._proxies:
+            LOGGER.info("%s already registered with DomainMonitor(%s)", proxy,
+                        self._domain)
+        else:
+            self._proxies.add(proxy)
+            self._response_times[proxy] = proxy_dict['resp_time']
 
-        for k in ['geo', 'anon_level']:
-            v = proxy_dict[k]
-            if v is not None:
-                self._props[v].add(proxy)
+            for k in ['geo', 'anon_level']:
+                v = proxy_dict[k]
+                if v is not None:
+                    self._props[v].add(proxy)
 
-        LOGGER.info("Registered %s with DomainMonitor(%s)", proxy,
-                    self._domain)
+            LOGGER.info("Registered %s with DomainMonitor(%s)", proxy,
+                        self._domain)
 
     def delist(self, proxy):
         """
@@ -108,11 +112,15 @@ class DomainMonitor:
         """
         Return this proxy so other requestors can use it.
         """
-        self._proxies.add(proxy)
-        if response_time > 0:
-            self._response_times[proxy] = response_time
+        if proxy in self._proxies:
+            LOGGER.info("%s already on DomainMonitor(%s)", proxy, self._domain)
+        else:
+            self._proxies.add(proxy)
+            if response_time > 0:
+                self._response_times[proxy] = response_time
 
-        LOGGER.info("%s ready again on DomainMonitor(%s)", proxy, self._domain)
+            LOGGER.info("%s ready again on DomainMonitor(%s)",
+                        proxy, self._domain)
 
     def average_response_time(self):
         """
