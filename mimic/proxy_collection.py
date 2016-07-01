@@ -16,7 +16,7 @@ class ProxyCollection:
     def register_proxy(self, proxy):
         url = url_from_proxy(proxy)
         self._proxies[url] = proxy
-        for monitor in self._monitors:
+        for monitor in self._monitors.values():
             monitor.register(proxy)
         LOGGER.info("ProxyCollection registering %s", url)
 

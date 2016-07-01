@@ -63,12 +63,12 @@ class Broker:
         self._cancel_tasks_on(proxy)
 
         if is_failure:
-            failures = self._consecutive_failures.get(proxy) + 1
+            failures = self._consecutive_failures.get(proxy, 0) + 1
             if failures > self._max_consecutive_failures:
                 LOGGER.info("Proxy %s failed out on %s",
                             proxy, self._monitor.domain)
             else:
-                self._consecutive_failures.get[proxy] = failures
+                self._consecutive_failures[proxy] = failures
                 coro = self._return_after(proxy, -1, self._bad_return_delay)
                 self._tasks[proxy] = self._loop.create_task(coro)
 

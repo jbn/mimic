@@ -1,5 +1,6 @@
 import json
 from aiohttp import web
+from mimic.util import parse_and_intern_domain
 
 
 MIME_JSON = "application/javascript"
@@ -76,7 +77,7 @@ class RESTProxyBroker:
 
         url = required_param(request.POST, 'url')
 
-        domain = mimic.parse_and_intern_domain(url)
+        domain = parse_and_intern_domain(url)
         if not domain:
             bad_request("Could not extract domain from {}".format(domain))
 
