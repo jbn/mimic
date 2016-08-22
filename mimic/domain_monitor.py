@@ -139,22 +139,28 @@ class DomainMonitor:
                 'avg_resp_time': self.average_response_time(),
                 'indices': {k: len(v) for k, v in self._props.items()}}
 
-    def _sample_proxy(self, proxies):
+    def _sample_proxy(self, proxies, min_offset=0.01):
         # Network conditions change. Selection is a function of the average
         # response time. It's stochastic to avoid synchronization issues but
         # weighted in favor of faster proxies.
         #
         # Do stochastic acceptance for fast proportional selection.
         # See: http://jbn.github.io/fast_proportional_selection/
-        max_resp_time, resp_times = -1, []
+        min_resp_time, max_resp_time, resp_times = 1000000000, -1, []
         for proxy in proxies:
             resp_time = self._response_times[proxy]
             if resp_time > max_resp_time:
                 max_resp_time = resp_time
+            if resp_time < min_resp_time:
+                min_resp_time = resp_time
             resp_times.append(resp_time)
+
+        translated_max = max_resp_time - min_resp_time + min_offset
 
         n = len(proxies)
         while True:
             i = int(n * random.random())
-            if random.random() < resp_times[i] / max_resp_time:
+            resp_time = resp_times[i]
+            score = (translated_max - resp_time + min_offset) / translated_max
+            if random.random() < score:
                 return proxies[i]
