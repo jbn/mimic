@@ -31,7 +31,7 @@ class RESTProxyBroker:
         self._proxy_collection = proxy_collection
         self._readme_str = readme_str
 
-        self._app = web.Application()
+        self._app = web.Application(debug=True)
 
         routes = [('GET',    "/",                 self.readme),
                   ('GET',    "/proxies",          self.list_proxies),

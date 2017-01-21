@@ -62,6 +62,8 @@ class Broker:
     def release(self, proxy, response_time, is_failure=False):
         self._cancel_tasks_on(proxy)
 
+        # TODO: Add check for None
+
         if is_failure:
             failures = self._consecutive_failures.get(proxy, 0) + 1
             if failures > self._max_consecutive_failures:

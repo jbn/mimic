@@ -155,12 +155,12 @@ class DomainMonitor:
                 min_resp_time = resp_time
             resp_times.append(resp_time)
 
-        translated_max = max_resp_time - min_resp_time + min_offset
+        translated_max = max_resp_time + min_offset - min_resp_time
 
         n = len(proxies)
         while True:
             i = int(n * random.random())
             resp_time = resp_times[i]
-            score = (translated_max - resp_time + min_offset) / translated_max
+            score = (resp_time + min_offset - min_resp_time) / translated_max
             if random.random() < score:
                 return proxies[i]
