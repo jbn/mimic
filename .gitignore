@@ -3,3 +3,4 @@
 .ipynb_checkpoints/
 mimic.iml
 build/
+mimic.egg-info
