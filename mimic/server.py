@@ -1,6 +1,7 @@
 import json
 from aiohttp import web
-from mimic.util import parse_and_intern_domain, ProxyProps
+from mimic.util import parse_and_intern_domain
+
 
 MIME_JSON = "application/javascript"
 
@@ -51,7 +52,8 @@ class RESTProxyBroker:
         return web.Response(text=self._readme_str, content_type='text/html')
 
     async def list_proxies(self, request):
-        return web.Response(text=human_json(self._proxy_collection.proxies),
+        proxy_strs = [str(proxy) for proxy in self._proxy_collection.proxies]
+        return web.Response(text=human_json(proxy_strs),
                             content_type=MIME_JSON)
 
     async def register_proxy(self, request):
@@ -120,11 +122,13 @@ if __name__ == '__main__':
     import mimic
 
     # Parse args
-    parser = argparse.ArgumentParser(description='A foo that bars')
+    parser = argparse.ArgumentParser(description='Serve you some proxies')
+
     parser.add_argument('--host',
                         nargs=1,
                         help='for binding the server',
                         default='localhost')
+
     parser.add_argument('--port',
                         nargs=1,
                         help='for binding the server',
