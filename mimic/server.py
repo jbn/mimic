@@ -1,7 +1,6 @@
 import json
 from aiohttp import web
-from mimic.util import parse_and_intern_domain
-
+from mimic.util import parse_and_intern_domain, ProxyProps
 
 MIME_JSON = "application/javascript"
 
@@ -67,6 +66,7 @@ class RESTProxyBroker:
         if 'resp_time' in proxy:
             proxy['resp_time'] = float(proxy['resp_time'])
 
+
         self._proxy_collection.register_proxy(proxy)
 
         return web.Response(text=json.dumps({'msg': "OK"}),
@@ -92,7 +92,10 @@ class RESTProxyBroker:
 
         broker = required_param(request.POST, 'broker')
         proxy = required_param(request.POST, 'proxy')
-        resp_time = float(request.POST.get('response_time', -1))
+        if proxy is None:
+            return web.Response(text='No such proxy', status=403)
+        resp_time = float(request.POST.get('response_time', 60.0))
+        #assert resp_time != -1  # WTF
         failed = request.POST.get('is_failure', 'false').lower() == 'true'
 
         res = await self._brokerage.release(broker, proxy, resp_time, failed)

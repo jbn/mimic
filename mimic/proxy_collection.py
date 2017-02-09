@@ -1,5 +1,5 @@
 import logging
-from mimic.util import url_from_proxy
+from mimic.util import url_from_proxy, ProxyProps
 from copy import deepcopy
 
 
@@ -14,11 +14,12 @@ class ProxyCollection:
         self._monitors = {}
 
     def register_proxy(self, proxy):
-        url = url_from_proxy(proxy)
-        self._proxies[url] = proxy
+        proxy = ProxyProps(**proxy)
+        #url = url_from_proxy(proxy)
+        self._proxies[str(proxy)] = proxy
         for monitor in self._monitors.values():
             monitor.register(proxy)
-        LOGGER.info("ProxyCollection registering %s", url)
+        LOGGER.info("ProxyCollection registering %s", str(proxy))
 
     def register_domain_monitor(self, monitor):
         self._monitors[monitor.domain] = monitor

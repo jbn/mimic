@@ -2,23 +2,12 @@ import logging
 import random
 from collections import defaultdict
 from functools import reduce
-from mimic.util import url_from_proxy
+from mimic.util import url_from_proxy, ProxyProps
 
 
 LOGGER = logging.getLogger('mimic.domain_monitor')
 LOGGER.setLevel(logging.INFO)
 LOGGER.addHandler(logging.StreamHandler())
-
-
-def pb_to_urls(proxy_broker_proxy):
-    # Utility class for use with a proxybroker.proxy.Proxy class
-    host, port = proxy_broker_proxy.host, proxy_broker_proxy.port
-
-    urls = []
-    for scheme in proxy_broker_proxy.schemes: # proxybroker.proxy.Proxy
-        urls.append("{}://{}:{}".format(scheme, host, port).lower())
-
-    return urls
 
 
 class DomainMonitor:
@@ -45,23 +34,23 @@ class DomainMonitor:
     def domain(self):
         return self._domain
 
-    def register(self, proxy_dict):
+    def register(self, proxy_props):
         """
         Add a proxy and index its properties.
-
-        See: util.PROXY_DEFAULTS for expected structure.
         """
-        proxy = url_from_proxy(proxy_dict)
+        assert isinstance(proxy_props, ProxyProps)  # Refactor shiv
+
+        proxy = str(proxy_props)
 
         if proxy in self._proxies:
             LOGGER.info("%s already registered with DomainMonitor(%s)", proxy,
                         self._domain)
         else:
             self._proxies.add(proxy)
-            self._response_times[proxy] = proxy_dict['resp_time']
+            self._response_times[proxy] = proxy_props.resp_time
 
             for k in ['geo', 'anon_level']:
-                v = proxy_dict[k]
+                v = getattr(proxy_props, k)
                 if v is not None:
                     self._props[v].add(proxy)
 
@@ -72,7 +61,7 @@ class DomainMonitor:
         """
         Remove a proxy and remove its properties from all indices.
         """
-        assert type(proxy) == 'str'
+        assert isinstance(proxy, str)
 
         self._proxies.remove(proxy)
         del self._response_times[proxy]
@@ -90,11 +79,16 @@ class DomainMonitor:
         LOGGER.info("Delisted %s with DomainMonitor(%s)", proxy, self._domain)
 
     def acquire(self, *requirements):
+        """
+        Acquire a proxy for use.
+
+        :param requirements: optional tags to match
+        """
         # This is a conjunction. What about an disjunction (e.g. country code)
         def _query(proxies, prop):
             return {p for p in proxies if p in self._props[prop]}
 
-        LOGGER.info("Acquiring proxy from DomainMonitor(%s) over %s",
+        LOGGER.info("Acquiring proxy from DomainMonitor(%s) over reqs=%s",
                     self._domain, requirements)
 
         candidates = list(reduce(_query, requirements, self._proxies))
@@ -112,8 +106,19 @@ class DomainMonitor:
         """
         Return this proxy so other requestors can use it.
         """
+        assert proxy is not None, "Attempting to release None!"  # BUGTEST
+
         if proxy in self._proxies:
+            # This means that the auto-return already returned it.
+            # TODO: Should be auto-reacquired, for wait seconds for correct
+            # throttling.
             LOGGER.info("%s already on DomainMonitor(%s)", proxy, self._domain)
+
+            # Hrm. I think this needs a special flag for released by
+            # auto-return or client...
+
+            if response_time > 0:
+                self._response_times[proxy] = response_time
         else:
             self._proxies.add(proxy)
             if response_time > 0:
@@ -155,12 +160,12 @@ class DomainMonitor:
                 min_resp_time = resp_time
             resp_times.append(resp_time)
 
-        translated_max = max_resp_time + min_offset - min_resp_time
+        if max_resp_time == 0.0:
+            return random.choice(proxies)
 
         n = len(proxies)
         while True:
             i = int(n * random.random())
-            resp_time = resp_times[i]
-            score = (resp_time + min_offset - min_resp_time) / translated_max
+            score = max_resp_time - (resp_times[i] - min_resp_time)
             if random.random() < score:
                 return proxies[i]

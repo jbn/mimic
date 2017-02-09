@@ -33,27 +33,44 @@ def parse_and_intern_domain(url):
         return interned_domain
 
 
-def proxy_dicts_from_proxy_broker_proxy(proxy):
-    ds = []
-    for scheme in proxy.schemes:
-        for proto, anon_level in proxy.types.items():
-            if anon_level is None:
-                anon_level = ""
-            else:
-                anon_level = "-" + anon_level.upper()
-
-            d = PROXY_DEFAULTS.copy()
-
-            d['proto'], d['host'], d['port'] = scheme, proxy.host, proxy.port
-            d['resp_time'] = proxy.avg_resp_time
-            d['geo'] = proxy.geo.code
-            d['anon_level'] = proto + anon_level
-
-            ds.append(d)
-    return ds
-
-
 def url_from_proxy(proxy_dict):
     return "{proto}://{host}:{port}".format(**proxy_dict)
 
 
+class ProxyProps:
+    """
+    A thin class to declare a proxy's properties.
+    """
+    __slots__ = ['proto', 'host', 'port', 'resp_time', 'geo', 'anon_level']
+
+    def __init__(self, proto, host, port, resp_time,
+                 geo=None, anon_level=None):
+        self.proto = proto
+        self.host = host
+        self.port = port
+        self.resp_time = resp_time
+        self.geo = geo
+        self.anon_level = anon_level
+
+    def __str__(self):
+        return "{}://{}:{}".format(self.proto, self.host, self.port).upper()
+
+    def __repr__(self):
+        return self.__str__()
+
+    def to_dict(self):
+        return {'proto': self.proto,
+                'host': self.host,
+                'port': self.port,
+                'resp_time': self.resp_time,
+                'geo': self.geo,
+                'anon_level': self.anon_level}
+
+    def _key(self):
+        return self.proto, self.host, self.port
+
+    def __eq__(self, other):
+        return self._key() == other._key()
+
+    def __hash__(self):
+        return hash(self._key())
