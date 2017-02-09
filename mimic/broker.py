@@ -7,6 +7,7 @@ LOGGER.setLevel(logging.INFO)
 LOGGER.addHandler(logging.StreamHandler())
 
 
+ONE_SECOND = 1
 THIRTY_SECONDS = 30
 ONE_MINUTE = 60
 
@@ -30,7 +31,8 @@ class Broker:
                  auto_return_delay=ONE_MINUTE,
                  bad_return_delay=10*ONE_MINUTE,
                  max_consecutive_failures=3,
-                 failed_release_resp_time=THIRTY_SECONDS):
+                 failed_release_resp_time=THIRTY_SECONDS,
+                 retry_time=ONE_SECOND):
 
         self._loop = loop or asyncio.get_event_loop()
         self._monitor = domain_monitor
@@ -39,6 +41,7 @@ class Broker:
         self._bad_return_delay = bad_return_delay
         self._max_consecutive_failures = max_consecutive_failures
         self._failed_release_resp_time = failed_release_resp_time
+        self._retry_time = retry_time
 
         self._consecutive_failures = {}
         self._tasks = {}  # proxy -> (status, task)
@@ -54,17 +57,14 @@ class Broker:
         :return: the proxy string, or None if the ``max_wait_time`` was
             exceeded.
         """
+        start_time = self._loop.time()
         proxy = self._monitor.acquire(*requirements)
 
         # If the proxy is None, there were no proxies currently available.
         # Sleep for the maximum_wait_time, then try again.
         # This doesn't FIFO queue at all. It's just stochastic.
-        if proxy is None:  # None currently available.
-            # TODO: FIX: Waiting the max_wait_time is bad for retrying.
-            # It should wait a few second each time, up to max_wait_time!
-            LOGGER.info("Waiting %s seconds to acquire on %s",
-                        max_wait_time, self._monitor.domain)
-            await asyncio.sleep(max_wait_time)
+        while proxy is None and self._loop.time() - start_time < max_wait_time:
+            await asyncio.sleep(self._retry_time)
             proxy = self._monitor.acquire(*requirements)
 
         # No proxy acquired within the max_wait_time.
