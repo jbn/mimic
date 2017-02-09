@@ -1,7 +1,8 @@
 import json
 from aiohttp import web
+from asyncio import get_event_loop
 from mimic.util import parse_and_intern_domain
-
+from mimic import ProxyCollection, Brokerage
 
 MIME_JSON = "application/javascript"
 
@@ -25,13 +26,27 @@ def human_json(obj):
     return json.dumps(obj, indent=4, sort_keys=True)
 
 
+def load_default_readme():
+    import os
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(script_dir, "index.html")) as fp:
+        return fp.read()
+
+DEFAULT_README = load_default_readme()
+
+
 class RESTProxyBroker:
-    def __init__(self, proxy_collection, brokerage, readme_str=""):
-        self._brokerage = brokerage
-        self._proxy_collection = proxy_collection
+    def __init__(self, proxy_collection=None,
+                 brokerage=None,
+                 readme_str=DEFAULT_README,
+                 debug=True,
+                 loop=None):
+
+        self._proxy_collection = proxy_collection or ProxyCollection()
+        self._brokerage = brokerage or Brokerage(self._proxy_collection)
         self._readme_str = readme_str
 
-        self._app = web.Application(debug=True)
+        self._app = web.Application(loop=loop or get_event_loop(), debug=debug)
 
         routes = [('GET',    "/",                 self.readme),
                   ('GET',    "/proxies",          self.list_proxies),
@@ -68,7 +83,6 @@ class RESTProxyBroker:
         if 'resp_time' in proxy:
             proxy['resp_time'] = float(proxy['resp_time'])
 
-
         self._proxy_collection.register_proxy(proxy)
 
         return web.Response(text=json.dumps({'msg': "OK"}),
@@ -97,7 +111,6 @@ class RESTProxyBroker:
         if proxy is None:
             return web.Response(text='No such proxy', status=403)
         resp_time = float(request.POST.get('response_time', 60.0))
-        #assert resp_time != -1  # WTF
         failed = request.POST.get('is_failure', 'false').lower() == 'true'
 
         res = await self._brokerage.release(broker, proxy, resp_time, failed)
@@ -113,38 +126,35 @@ class RESTProxyBroker:
         return web.Response(text=human_json(stats), content_type=MIME_JSON)
 
     async def delete_domain(self, request):
+        # TODO
         return web.Response(body=b"not_implemented")
 
 
-if __name__ == '__main__':
+def parse_args():
     import argparse
-    import os
-    import mimic
 
-    # Parse args
     parser = argparse.ArgumentParser(description='Serve you some proxies')
 
     parser.add_argument('--host',
-                        nargs=1,
+                        action='store',
+                        dest='host',
                         help='for binding the server',
                         default='localhost')
 
     parser.add_argument('--port',
-                        nargs=1,
+                        action='store',
+                        dest='port',
                         help='for binding the server',
                         default='8080',
                         type=int)
 
-    command_line_args = vars(parser.parse_args())
-    args = {'port': int(command_line_args['port'][0]),
-            'host': command_line_args['host'][0]}
+    parser.add_argument('--debug', dest='debug', action='store_true')
 
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(script_dir, "index.html")) as fp:
-        index_html = fp.read()
+    return parser.parse_args()
 
-    proxy_collection = mimic.ProxyCollection()
-    brokerage = mimic.Brokerage(proxy_collection)
-    server = RESTProxyBroker(proxy_collection, brokerage, index_html)
 
-    server.run(**args)
+if __name__ == '__main__':
+    command_line_args = parse_args()
+
+    server = RESTProxyBroker(debug=command_line_args.debug)
+    server.run(host=command_line_args.host, port=int(command_line_args.port))

@@ -135,7 +135,7 @@ class Broker:
                     wait_seconds, proxy, self._monitor.domain)
         try:
             # This is a cheap form of per-domain, per-proxy throttling.
-            await asyncio.sleep(wait_seconds)
+            await asyncio.sleep(wait_seconds, loop=self._loop)
             self._monitor.release(proxy, response_time)
 
             # Only one task should exist at any moment each any proxy.
