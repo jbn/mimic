@@ -1,11 +1,9 @@
 import asyncio
-import logging
+
+from mimic.util import setup_logger
 
 
-LOGGER = logging.getLogger('mimic.broker')
-LOGGER.setLevel(logging.INFO)
-LOGGER.addHandler(logging.StreamHandler())
-
+LOGGER = setup_logger('broker')
 
 ONE_SECOND = 1
 THIRTY_SECONDS = 30

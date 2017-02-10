@@ -1,4 +1,5 @@
-from six.moves.urllib.parse import urlparse
+import logging
+from urllib.parse import urlparse
 
 
 PROXY_DEFAULTS = {'proto': None,
@@ -10,6 +11,21 @@ PROXY_DEFAULTS = {'proto': None,
 
 
 INTERNED_DOMAINS = {}
+
+
+def setup_logger(service, default_level=logging.INFO):
+    """
+    Setup a logger for a given service with a StreamHandler attached.
+
+    :param service: the service to log (i.e. `mimic.<service>`)
+    :param default_level: the logging level
+    :return: the logger
+    """
+    logger = logging.getLogger('mimic.' + service)
+    logger.setLevel(default_level)
+    logger.addHandler(logging.StreamHandler())
+
+    return logger
 
 
 def parse_and_intern_domain(url):

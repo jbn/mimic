@@ -1,13 +1,10 @@
-import logging
 import random
 from collections import defaultdict
 from functools import reduce
-from mimic.util import url_from_proxy, ProxyProps
+from mimic.util import ProxyProps, setup_logger
 
 
-LOGGER = logging.getLogger('mimic.domain_monitor')
-LOGGER.setLevel(logging.INFO)
-LOGGER.addHandler(logging.StreamHandler())
+LOGGER = setup_logger('domain_monitor')
 
 
 class DomainMonitor:

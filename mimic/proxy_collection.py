@@ -1,11 +1,8 @@
-import logging
-from mimic.util import url_from_proxy, ProxyProps
+from mimic.util import ProxyProps, setup_logger
 from copy import deepcopy
 
 
-LOGGER = logging.getLogger('mimic.proxy_collection')
-LOGGER.setLevel(logging.INFO)
-LOGGER.addHandler(logging.StreamHandler())
+LOGGER = setup_logger('proxy_collection')
 
 
 class ProxyCollection:
@@ -15,7 +12,6 @@ class ProxyCollection:
 
     def register_proxy(self, proxy):
         proxy = ProxyProps(**proxy)
-        #url = url_from_proxy(proxy)
         self._proxies[str(proxy)] = proxy
         for monitor in self._monitors.values():
             monitor.register(proxy)

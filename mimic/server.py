@@ -1,4 +1,6 @@
 import json
+import logging
+
 from aiohttp import web
 from asyncio import get_event_loop
 from mimic.util import parse_and_intern_domain
@@ -39,11 +41,15 @@ class RESTProxyBroker:
                  brokerage=None,
                  readme_str=DEFAULT_README,
                  debug=True,
-                 loop=None):
+                 loop=None,
+                 log_level=logging.ERROR):
 
         self._proxy_collection = proxy_collection or ProxyCollection()
         self._brokerage = brokerage or Brokerage(self._proxy_collection)
         self._readme_str = readme_str
+
+        for service in ['broker', 'domain_monitor', 'proxy_collection']:
+            logging.getLogger('mimic.' + service).setLevel(log_level)
 
         self._app = web.Application(loop=loop or get_event_loop(), debug=debug)
 
