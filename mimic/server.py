@@ -4,11 +4,10 @@ from asyncio import get_event_loop
 from mimic.util import parse_and_intern_domain
 from mimic import ProxyCollection, Brokerage
 
-MIME_JSON = "application/javascript"
-
 
 def bad_request(err_msg):
-    raise web.HTTPBadRequest(text=json.dumps(err_msg), content_type=MIME_JSON)
+    raise web.HTTPBadRequest(text=json.dumps(err_msg),
+                             content_type="application/javascript")
 
 
 def csv_param(params, param):
@@ -68,8 +67,7 @@ class RESTProxyBroker:
 
     async def list_proxies(self, request):
         proxy_strs = [str(proxy) for proxy in self._proxy_collection.proxies]
-        return web.Response(text=human_json(proxy_strs),
-                            content_type=MIME_JSON)
+        return web.json_response(proxy_strs, dumps=human_json)
 
     async def register_proxy(self, request):
         await request.post()
@@ -85,8 +83,7 @@ class RESTProxyBroker:
 
         self._proxy_collection.register_proxy(proxy)
 
-        return web.Response(text=json.dumps({'msg': "OK"}),
-                            content_type=MIME_JSON)
+        return web.json_response({'msg': "OK"})
 
     async def acquire_proxy(self, request):
         await request.post()
@@ -101,7 +98,7 @@ class RESTProxyBroker:
         max_wait_time = int(request.POST.get('max_wait_time', 60))
 
         res = await self._brokerage.acquire(url, requirements, max_wait_time)
-        return web.Response(text=json.dumps(res), content_type=MIME_JSON)
+        return web.json_response(res)
 
     async def release_proxy(self, request):
         await request.post()
@@ -114,16 +111,16 @@ class RESTProxyBroker:
         failed = request.POST.get('is_failure', 'false').lower() == 'true'
 
         res = await self._brokerage.release(broker, proxy, resp_time, failed)
-        return web.Response(text=json.dumps(res), content_type=MIME_JSON)
+        return web.json_response(res)
 
     async def list_all_stats(self, request):
         stats = self._brokerage.list_all()
-        return web.Response(text=human_json(stats), content_type=MIME_JSON)
+        return web.json_response(stats, dumps=human_json)
 
     async def get_domain_stats(self, request):
         domain = request.match_info['domain'].lower()
         stats = self._brokerage.list_all().get(domain, {})
-        return web.Response(text=human_json(stats), content_type=MIME_JSON)
+        return web.json_response(stats, dumps=human_json)
 
     async def delete_domain(self, request):
         # TODO
