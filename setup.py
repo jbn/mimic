@@ -9,5 +9,6 @@ setup(
     author_email="jbn@abreka.com",
     description="Proxy broker middleware.",
     long_description="proxy broker middleware",
-    url="https://github.com/jbn/mimic"
+    url="https://github.com/jbn/mimic",
+    package_data={'mimic': ['index.html']}
 )

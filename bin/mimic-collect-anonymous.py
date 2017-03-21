@@ -26,7 +26,7 @@ if __name__ == '__main__':
                         action='store',
                         dest='endpoint',
                         help='url to mimic server (with no trailing slash)',
-                        default='http://localhost:8901')
+                        default='http://0.0.0.0:8901')
     endpoint = parser.parse_args().endpoint + '/proxies/register'
 
     proxies = asyncio.Queue()

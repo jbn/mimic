@@ -90,3 +90,24 @@ class ProxyProps:
 
     def __hash__(self):
         return hash(self._key())
+
+
+def proxy_dicts_from_proxy_broker_proxy(proxy):
+    ds = []
+    for scheme in proxy.schemes:
+        for proto, anon_level in proxy.types.items():
+            if anon_level is None:
+                anon_level = ""
+            else:
+                anon_level = "-" + anon_level.upper()
+
+            d = PROXY_DEFAULTS.copy()
+
+            d['proto'], d['host'], d['port'] = scheme, proxy.host, proxy.port
+            d['resp_time'] = proxy.avg_resp_time
+            d['geo'] = proxy.geo.code
+            d['anon_level'] = proto + anon_level
+
+            ds.append(d)
+    return ds
+

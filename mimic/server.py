@@ -142,7 +142,7 @@ def parse_args():
                         action='store',
                         dest='host',
                         help='for binding the server',
-                        default='localhost')
+                        default='0.0.0.0')
 
     parser.add_argument('--port',
                         action='store',
