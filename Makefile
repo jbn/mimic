@@ -10,3 +10,4 @@ serve_local:
 
 serve_on_docker:
 	docker run --rm -it -p 8901:8901 mimic_server
+

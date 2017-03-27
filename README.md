@@ -1,11 +1,14 @@
 # What is this?
 
-A middleware service that gives you proxies so you can scrape anonymously.
+When scraping websites, it's often useful -- if not, nessessary -- to
+scrape behind a number of proxies. This service allocates proxies to
+requestors. 
 
 ## Usage
 
 ```sh
-make
+make serve_local
 ```
 
-Then visit, [http://localhost:8080](http://localhost:8080)
+Then visit, [http://0.0.0.0:8901](http://0.0.0.0:8901)
+
