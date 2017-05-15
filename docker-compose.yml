@@ -1,12 +1,12 @@
 version: '2'
 services:
-    mimic:
-        build: .
+    mimic_server:
+        image: mimic
         ports:
             - "8901:8901"
     bootstrap:
-        build: .
-        command: python /mimic_server/bin/mimic-collect-anonymous.py --endpoint http://mimic:8901
+        image: mimic
+        command: python /mimic/bin/mimic-collect-anonymous.py --endpoint http://mimic_server:8901
         depends_on: 
-         - mimic
+         - mimic_server
 

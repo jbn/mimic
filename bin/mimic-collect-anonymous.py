@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import requests
+import time
 
 from mimic.util import proxy_dicts_from_proxy_broker_proxy, url_from_proxy
 from proxybroker import Broker
@@ -19,6 +20,19 @@ async def register(proxies, endpoint):
             print("Resp on {}: {} on ".format(url, resp))
 
 
+def ensure_server_up(url, retries=3, delay=30):
+    for i in range(retries):
+        try:
+            resp = requests.get(url)
+            resp.close()
+            return True
+        except ConnectionError:
+            print("Couldn't connect, trying again in 30 seconds...")
+            time.sleep(delay)
+
+    raise RuntimeError("Couldn't connect to {}".format(url))
+
+
 if __name__ == '__main__':
     desc = 'Collect and inject proxies from public sources'
     parser = argparse.ArgumentParser(description=desc)
@@ -27,8 +41,10 @@ if __name__ == '__main__':
                         dest='endpoint',
                         help='url to mimic server (with no trailing slash)',
                         default='http://0.0.0.0:8901')
-    endpoint = parser.parse_args().endpoint + '/proxies/register'
+    args = parser.parse_args()
+    ensure_server_up(args.endpoint)
 
+    endpoint = args.endpoint + '/proxies/register'
     proxies = asyncio.Queue()
     broker = Broker(proxies)
 

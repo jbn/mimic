@@ -1,8 +1,8 @@
 FROM python:3.5-onbuild
 
-WORKDIR /mimic_server/
+WORKDIR /mimic/
 
-COPY ./ /mimic_server
+COPY ./ /mimic
 
 RUN python setup.py install
 
