@@ -11,3 +11,6 @@ serve_local:
 serve_on_docker:
 	docker run --rm -it -p 8901:8901 mimic
 
+refresh_proxybroker_code:
+	rm -rf ProxyBroker
+	git clone https://github.com/jbn/ProxyBroker.git

@@ -1,4 +1,5 @@
 *.pyc
+ProxyBroker/
 .idea/
 .ipynb_checkpoints/
 mimic.iml

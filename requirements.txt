@@ -1,5 +1,4 @@
 aiohttp==1.1.5
 asynctest
 requests
-git+https://github.com/jbn/ProxyBroker#egg=proxybroker
-
+proxybroker
